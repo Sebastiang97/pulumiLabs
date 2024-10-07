@@ -1,0 +1,91 @@
+const pulumi = require("@pulumi/pulumi");
+const azure = require("@pulumi/azure");
+
+// Crea un nuevo grupo de recursos
+const resourceGroup = new azure.core.ResourceGroup("resourceGroup");
+
+// Crea una nueva Virtual Machine
+const vm = new azure.compute.VirtualMachine("vm", {
+    resourceGroupName: resourceGroup.name,
+    location: resourceGroup.location,
+    vmSize: "Standard_B1ls",
+    storageImageReference: {
+        publisher: "Canonical",
+        offer: "UbuntuServer",
+        sku: "18.04-LTS",
+        version: "latest"
+    },
+    storageOsDisk: {
+        createOption: "FromImage"
+    },
+    osProfile: {
+        computerName: "hostname",
+        adminUsername: "adminuser",
+        adminPassword: "StrongPassword123!"
+    },
+    networkInterfaceIds: [nic.id],
+
+});
+
+// Crea una nueva tarjeta de interfaz de red
+const nic = new azure.network.NetworkInterface("nic", {
+    resourceGroupName: resourceGroup.name,
+    location: resourceGroup.location,
+    ipConfigurations: [{
+        name: "ipconfig",
+        subnetId: subnet.id,
+        privateIpAddressAllocation: "Dynamic",
+    }],
+});
+
+// Crea una nueva subred
+const subnet = new azure.network.Subnet("subnet", {
+    resourceGroupName: resourceGroup.name,
+    virtualNetworkName: vnet.name,
+    addressPrefixes: ["10.0.1.0/24"],
+});
+
+// Crea una nueva red virtual
+const vnet = new azure.network.VirtualNetwork("vnet", {
+    resourceGroupName: resourceGroup.name,
+    location: resourceGroup.location,
+    addressSpaces: ["10.0.0.0/16"],
+});
+
+// Crea una nueva cuenta de almacenamiento para los discos de la VM
+const storageAccount = new azure.storage.Account("storageaccount", {
+    resourceGroupName: resourceGroup.name,
+    location: resourceGroup.location,
+    accountTier: "Standard",
+    accountReplicationType: "LRS",
+});
+
+// Abre el puerto 80 para tráfico entrante
+const allowHTTPInbound = new azure.network.NetworkSecurityRule("allow-http-inbound", {
+    resourceGroupName: resourceGroup.name,
+    securityGroupName: nsg.name,
+    priority: 100,
+    direction: "Inbound",
+    access: "Allow",
+    protocol: "Tcp",
+    sourceAddressPrefix: "*",
+    sourcePortRange: "*",
+    destinationAddressPrefix: "*",
+    destinationPortRange: "80",
+});
+
+// Cierra todos los puertos para tráfico saliente
+const denyAllOutbound = new azure.network.NetworkSecurityRule("deny-all-outbound", {
+    resourceGroupName: resourceGroup.name,
+    securityGroupName: nsg.name,
+    priority: 200,
+    direction: "Outbound",
+    access: "Deny",
+    protocol: "*",
+    sourceAddressPrefix: "*",
+    sourcePortRange: "*",
+    destinationAddressPrefix: "*",
+    destinationPortRange: "*",
+});
+
+

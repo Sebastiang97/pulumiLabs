@@ -1,0 +1,6 @@
+name: my-azure-network
+runtime:
+  name: nodejs
+  options:
+    typescript: false
+description: my-azure-network

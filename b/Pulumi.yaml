@@ -1,0 +1,6 @@
+name: abc
+runtime:
+  name: python
+  options:
+    virtualenv: venv
+description: abc
